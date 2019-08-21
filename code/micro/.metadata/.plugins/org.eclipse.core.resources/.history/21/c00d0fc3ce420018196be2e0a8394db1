@@ -1,0 +1,35 @@
+#include "cache.h"
+
+
+Cache *CacheInit(){
+    Cache cache[CACHESIZE] = malloc(CACHESIZE*sizeof(Cache));
+    if(cache == NULL){
+        return NULL;
+    }
+    int i;
+    for(i = 0; i < CACHESIZE; i++){
+        strcpy(cache[i].cruzID, "Unknown ID\0");
+        cache[i].minute = 0;
+        cache[i].hour = 0;
+        cache[i].day = 0;
+        cache[i].month = 0;
+    }
+    return &cache;
+}
+
+void CacheDelete(Cache *cache){
+    if(cache != NULL){
+        free(cache);
+    }
+}
+
+
+Cache *CacheClear(Cache *cache){
+    CacheDelete(cache);
+    Cache *newCache = CacheInit();
+    return newCache;
+}
+
+void newLoginCache(Cache *cache, char *cruzID){
+
+}

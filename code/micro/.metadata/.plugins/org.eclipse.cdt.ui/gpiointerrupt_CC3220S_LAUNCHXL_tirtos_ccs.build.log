@@ -1,0 +1,32 @@
+
+**** Build of configuration Debug for project gpiointerrupt_CC3220S_LAUNCHXL_tirtos_ccs ****
+
+"C:\\ti\\ccsv7\\utils\\bin\\gmake" -k -j 4 all -O 
+ 
+'Building file: "../main_tirtos.c"'
+'Invoking: ARM Compiler'
+"C:/ti/ccsv7/tools/compiler/ti-cgt-arm_16.9.6.LTS/bin/armcl" -mv7M4 --code_state=16 --float_support=vfplib -me --include_path="C:/Users/Sam/Documents/UCSC/2018_Winter/CMPE123A/sazwu/code/micro/gpiointerrupt_CC3220S_LAUNCHXL_tirtos_ccs" --include_path="C:/ti/simplelink_cc32xx_sdk_1_60_00_04/source/ti/posix/ccs" --include_path="C:/ti/ccsv7/tools/compiler/ti-cgt-arm_16.9.6.LTS/include" -g --diag_warning=225 --diag_warning=255 --diag_wrap=off --display_error_number --gen_func_subsections=on --preproc_with_compile --preproc_dependency="main_tirtos.d_raw" --cmd_file="C:/Users/Sam/Documents/UCSC/2018_Winter/CMPE123A/sazwu/code/micro/tirtos_builds_CC3220S_LAUNCHXL_release_ccs/Debug/configPkg/compiler.opt" "../main_tirtos.c"
+'Finished building: "../main_tirtos.c"'
+ 
+'Building file: "../gpiointerrupt.c"'
+'Invoking: ARM Compiler'
+"C:/ti/ccsv7/tools/compiler/ti-cgt-arm_16.9.6.LTS/bin/armcl" -mv7M4 --code_state=16 --float_support=vfplib -me --include_path="C:/Users/Sam/Documents/UCSC/2018_Winter/CMPE123A/sazwu/code/micro/gpiointerrupt_CC3220S_LAUNCHXL_tirtos_ccs" --include_path="C:/ti/simplelink_cc32xx_sdk_1_60_00_04/source/ti/posix/ccs" --include_path="C:/ti/ccsv7/tools/compiler/ti-cgt-arm_16.9.6.LTS/include" -g --diag_warning=225 --diag_warning=255 --diag_wrap=off --display_error_number --gen_func_subsections=on --preproc_with_compile --preproc_dependency="gpiointerrupt.d_raw" --cmd_file="C:/Users/Sam/Documents/UCSC/2018_Winter/CMPE123A/sazwu/code/micro/tirtos_builds_CC3220S_LAUNCHXL_release_ccs/Debug/configPkg/compiler.opt" "../gpiointerrupt.c"
+"../gpiointerrupt.c", line 85: warning #70-D: integer conversion resulted in truncation
+"../gpiointerrupt.c", line 32: warning #179-D: variable "i" was declared but never referenced
+"../gpiointerrupt.c", line 65: warning #179-D: variable "string" was declared but never referenced
+"../gpiointerrupt.c", line 67: warning #552-D: variable "firmwareVersion" was set but never used
+"../gpiointerrupt.c", line 68: warning #552-D: variable "returnConfigureSAM" was set but never used
+"../gpiointerrupt.c", line 76: warning #552-D: variable "ACKreturn" was set but never used
+"../gpiointerrupt.c", line 83: warning #179-D: variable "flag" was declared but never referenced
+'Finished building: "../gpiointerrupt.c"'
+ 
+'Building target: "gpiointerrupt_CC3220S_LAUNCHXL_tirtos_ccs.out"'
+'Invoking: ARM Linker'
+"C:/ti/ccsv7/tools/compiler/ti-cgt-arm_16.9.6.LTS/bin/armcl" -mv7M4 --code_state=16 --float_support=vfplib -me -g --diag_warning=225 --diag_warning=255 --diag_wrap=off --display_error_number --gen_func_subsections=on -z -m"gpiointerrupt_CC3220S_LAUNCHXL_tirtos_ccs.map" -i"C:/ti/ccsv7/tools/compiler/ti-cgt-arm_16.9.6.LTS/lib" -i"C:/ti/simplelink_cc32xx_sdk_1_60_00_04/source" -i"C:/ti/simplelink_cc32xx_sdk_1_60_00_04/kernel/tirtos/packages" -i"C:/ti/ccsv7/tools/compiler/ti-cgt-arm_16.9.6.LTS/include" --reread_libs --diag_wrap=off --display_error_number --warn_sections --xml_link_info="gpiointerrupt_CC3220S_LAUNCHXL_tirtos_ccs_linkInfo.xml" --rom_model -o "gpiointerrupt_CC3220S_LAUNCHXL_tirtos_ccs.out" "./CC3220S_LAUNCHXL.obj" "./PN532.obj" "./gpiointerrupt.obj" "./main_tirtos.obj" "../CC3220S_LAUNCHXL_TIRTOS.cmd" -l"C:/Users/Sam/Documents/UCSC/2018_Winter/CMPE123A/sazwu/code/micro/tirtos_builds_CC3220S_LAUNCHXL_release_ccs/Debug/configPkg/linker.cmd" -l"ti/display/lib/display.aem4" -l"ti/drivers/lib/drivers_cc32xx.aem4" -l"third_party/fatfs/lib/fatfs.aem4" -l"ti/dpl/lib/dpl_cc32xx.aem4" -l"ti/devices/cc32xx/driverlib/ccs/Release/driverlib.a" -llibc.a 
+<Linking>
+'Finished building target: "gpiointerrupt_CC3220S_LAUNCHXL_tirtos_ccs.out"'
+ 
+C:/ti/ccsv7/utils/tiobj2bin/tiobj2bin gpiointerrupt_CC3220S_LAUNCHXL_tirtos_ccs.out gpiointerrupt_CC3220S_LAUNCHXL_tirtos_ccs.bin C:/ti/ccsv7/tools/compiler/ti-cgt-arm_16.9.6.LTS/bin/armofd C:/ti/ccsv7/tools/compiler/ti-cgt-arm_16.9.6.LTS/bin/armhex C:/ti/ccsv7/utils/tiobj2bin/mkhex4bin
+ 
+
+**** Build Finished ****

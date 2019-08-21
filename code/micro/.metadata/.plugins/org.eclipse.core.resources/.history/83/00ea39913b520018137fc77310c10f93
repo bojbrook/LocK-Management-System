@@ -1,0 +1,648 @@
+/* Standard libraries */
+#include <unistd.h>
+#include <stdio.h>
+#include <stdint.h>
+#include <stddef.h>
+#include <string.h>
+
+/* TI-DRIVERS Header files */
+#include <ti/drivers/GPIO.h>
+#include <ti/drivers/SPI.h>
+#include <ti/drivers/net/wifi/simplelink.h>
+#include <ti/drivers/Power.h>
+#include <ti/drivers/power/PowerCC32XX.h>
+#include <ti/devices/cc32xx/driverlib/prcm.h>
+#include <ti/devices/cc32xx/driverlib/utils.h>
+#include "Board.h"
+
+/* Our Files */
+#include "PN532.h"
+//#include "cache.h"
+#include "empty.h"
+
+
+uint8_t CONNECTED = 0;
+/* Control block definition */
+pthread_t  gSpawnThread = (pthread_t)NULL;
+appControlBlock     app_CB;
+
+void *mainThread(void *arg0)
+{
+    /* VARIABLES */
+    ///////////////////////////////////////////////////////////////////////////////////
+    //PN532 Sensor Variables
+    uint32_t retVal, firmwareVersion = 0;
+    uint8_t returnConfigureSAM = 0, ACKreturn = 0, test[1] = {GETFIRMWAREVERSION};
+    //uint8_t cacheNames[10][10];
+    //WiFi variables
+    int32_t Sd;
+    SlSockAddr_t *Sa;
+    sockAddr_t  sAddr;
+    int i, j;
+    struct SlTimeval_t TimeVal;
+    TimeVal.tv_sec = 3; // Seconds
+    TimeVal.tv_usec = 0; // Microseconds. 10000 microseconds resolution
+
+    /* INIT FUNCTIONS */
+    ///////////////////////////////////////////////////////////////////////////////////
+    Board_initGeneral();            //already has power_init();
+    GPIO_init();
+    SPI_init();
+    InitSPI();
+    InitTerm();                         //configures UART terminal
+    retVal = initAppVariables();
+
+
+    /* Configure the LED and button pins */
+    ////////////////////////////////////////////////////////////////////////////////////
+//    GPIO_setConfig(Board_GPIO_LED0, GPIO_CFG_OUT_STD | GPIO_CFG_OUT_LOW);
+//    GPIO_setConfig(Board_GPIO_LED1, GPIO_CFG_OUT_STD | GPIO_CFG_OUT_LOW);
+//    GPIO_setConfig(Board_GPIO_BUTTON0, GPIO_CFG_IN_PU | GPIO_CFG_IN_INT_FALLING);
+//    GPIO_write(Board_GPIO_LED0, Board_GPIO_LED_ON);
+//    GPIO_enableInt(Board_GPIO_BUTTON0);
+
+
+    GPIO_setConfig(SLAVESELECT, GPIO_CFG_OUT_STD | GPIO_CFG_OUT_LOW);
+    GPIO_write(SLAVESELECT, GPIOLEDOFF);
+    GPIO_setConfig(GREENLIGHT, GPIO_CFG_OUT_STD | GPIO_CFG_OUT_LOW);
+    GPIO_write(GREENLIGHT, GPIOLEDOFF);
+    GPIO_setConfig(REDLIGHT, GPIO_CFG_OUT_STD | GPIO_CFG_OUT_LOW);
+    GPIO_write(REDLIGHT, GPIOLEDOFF);
+
+    GPIO_setConfig(CC3220S_LAUNCHXL_PIN_01, GPIO_CFG_OUT_STD | GPIO_CFG_OUT_LOW);
+    GPIO_setConfig(CC3220S_LAUNCHXL_PIN_02, GPIO_CFG_OUT_STD | GPIO_CFG_OUT_LOW);
+    GPIO_write(CC3220S_LAUNCHXL_PIN_02, 0);
+    GPIO_write(CC3220S_LAUNCHXL_PIN_01, 0);
+
+
+
+
+    /*Sets up the interrupt from hibernate*/
+    ////////////////////////////////////////////////////////////////////////////////////
+//    PRCMHibernateWakeUpGPIOSelect(PRCM_HIB_GPIO13, PRCM_HIB_RISE_EDGE);
+//    PRCMHibernateWakeupSourceEnable(PRCM_HIB_GPIO13);
+
+//    PRCMHibernateWakeupSourceEnable(PRCM_HIB_SLOW_CLK_CTR);
+//    PRCMSlowClkCtrMatchSet(32768);
+//    Power_enablePolicy();
+
+
+
+    UART_PRINT("NFC SENSOR INIT\n");
+    UART_PRINT("*******************************************************************\n");
+    ACKreturn = SendCommandAndACK(test, sizeof(test));
+    UART_PRINT("ACK return: x%x\n", ACKreturn);
+    returnConfigureSAM = ConfigureSAM();
+    UART_PRINT("SAM Configuration: x%x\n", returnConfigureSAM);
+    firmwareVersion = GetFirmwareVersion();
+    UART_PRINT("Firmware Version: x%x\n", firmwareVersion);
+//    //turning on WiFi early because it takes awhile
+    UART_PRINT("*******************************************************************\n");
+    UART_PRINT("Turning on WiFi\n");
+    UART_PRINT("*******************************************************************\n");
+    StartWiFi();
+//    sleep(3);
+    UART_PRINT("Exited StartWiFi()\n");
+
+
+    //////////////////////////////////////////////////////////////////////////////
+    //sleep sensor, PICC NFC testing
+    //////////////////////////////////////////////////////////////////////////////
+    uint8_t startIndex = 0;
+    int timer = 0, cruzIDLength = 0;
+    uint8_t zeroArray[40] = {0};
+    uint8_t rxData[40] = {0};
+    char cruzIDInputToCloud[40] = {0};
+//
+//
+
+    while(CONNECTED == 0){
+        UART_PRINT("In loop\n");
+       sleep(1);
+    }
+////    UART_PRINT("Set Parameters return: %d\n", SetParameters(0b00000));
+    UART_PRINT("*******************************************************************\n");
+    UART_PRINT("Entering Infinite Loop\n");
+    UART_PRINT("*******************************************************************\n\n");
+    while(1){
+        uint32_t returnPassiveTarget = DetectPassiveTarget(ISOIEC14443A);
+        if(returnPassiveTarget > 1000)
+        {
+            for(i = 0; i < 30; i++){
+                cruzIDInputToCloud[i] = '\0';
+                zeroArray[i] = 0;
+                rxData[i] = 0;
+            }
+            zeroArray[0] = SPI_DATAREAD;
+            startIndex = 0;
+            timer = 0;
+            UART_PRINT("DetectPassiveTarget ID: x%x\n", returnPassiveTarget);
+            uint8_t testPassiveHCE = InDataExchange();
+            if(testPassiveHCE != 6){
+                while(timer < 10){              //loop only lasts usleep() time, or if not an error
+                    ReadSPI(zeroArray, rxData, 30);
+                    uint8_t startIndex = frameCheck(rxData, INDATAEXCHANGE + 0x01);
+                    if(startIndex != ERROR){        //if not an error, break from loop
+                        break;
+                    }
+                    timer++;
+                    usleep(100000);
+                }
+                if(startIndex == ERROR){   //didn't work out
+                    UART_PRINT("Framing Error\n");
+                    break;
+                }else{
+                    for(i = 0; i < 10; i++){
+                        if(rxData[i+9+startIndex] != '!'){     //not sure why it is 0x90, should be char '!'
+                           UART_PRINT("%c", rxData[i+9+startIndex]);
+                           cruzIDInputToCloud[i] = rxData[i+9+startIndex];
+                           cruzIDLength++;
+                        }else{
+                            break;
+                        }
+
+                    }
+                }
+////                //////////////////////////////////////////////////////////////////////////////
+////                /*WIFI*/
+////                //////////////////////////////////////////////////////////////////////////////
+                sAddr.in4.sin_family = SL_AF_INET;
+                sAddr.in4.sin_port = sl_Htons((unsigned short)6001);
+                sAddr.in4.sin_addr.s_addr = sl_Htonl(SL_IPV4_VAL(35,230,38,111));
+                Sa = (SlSockAddr_t*)&sAddr.in4;
+                Sd = sl_Socket(Sa->sa_family, SL_SOCK_STREAM, TCP_PROTOCOL_FLAGS);
+                ASSERT_ON_ERROR(Sd, SL_SOCKET_ERROR);
+
+                UART_PRINT("Entering IsAllowed()\n");
+                retVal = IsAllowed(Sd,Sa,cruzIDInputToCloud);
+                //sl_Stop(SL_STOP_TIMEOUT);                       //immediately turn off wifi
+                UART_PRINT("RetVal in main: %d\n", retVal);
+                if(retVal == 1){
+                    UART_PRINT("They are allowed in %s\n", ROOM_NUMBER);
+                    GPIO_write(GREENLIGHT, GPIOLEDON);
+                }else if(retVal == 0){
+                    UART_PRINT("They are not allowed in %s\n", ROOM_NUMBER);
+                    GPIO_write(REDLIGHT, GPIOLEDON);
+                }else{
+                    UART_PRINT("SOMETHING WENT REALLY WRONG\n");
+                    GPIO_write(REDLIGHT, GPIOLEDON);
+                }
+                usleep(400000);          //LEDs are on for half a second
+            }
+            usleep(10000);
+            GPIO_write(GREENLIGHT, GPIOLEDOFF);
+            GPIO_write(REDLIGHT, GPIOLEDOFF);
+         }
+        Power_shutdown(0, 3000);
+    }
+
+
+    //
+    //    long            DeviceFileHandle = -1;
+    //    _i32            RetVal;        //negative retval is an error
+    //    unsigned char   cruzIDArray[LINES][MAXCRUZIDLENGTH];
+    //    _u32 MasterToken = 0;
+    //
+    //
+    //    UART_PRINT("OPENING\n");
+    //    DeviceFileHandle =  sl_FsOpen((unsigned char *)DEVICEFILENAME,SL_FS_READ,&MasterToken);
+    //    if(DeviceFileHandle < 0){
+    //        UART_PRINT("Creating New file\n");
+    //        DeviceFileHandle =  sl_FsOpen((unsigned char *)DEVICEFILENAME,
+    //                                      SL_FS_CREATE|SL_FS_OVERWRITE | SL_FS_CREATE_SECURE |
+    //                                      SL_FS_CREATE_NOSIGNATURE | SL_FS_CREATE_MAX_SIZE( 1024 ),&MasterToken);
+    //    }
+    //    UART_PRINT("Open: %d\n", DeviceFileHandle);
+    //
+    //    //writing
+    //    for(i = 0; i < LINES; i++){
+    //        RetVal = sl_FsWrite( DeviceFileHandle, i*MAXCRUZIDLENGTH, (unsigned char *)"HelloWorld", MAXCRUZIDLENGTH);
+    //        if(RetVal < 0){
+    //            UART_PRINT("Error writing at line %d\n", i);
+    //        }
+    //    }
+    //    RetVal = sl_FsClose(DeviceFileHandle, NULL, NULL , 0);
+    //    if(RetVal < 0){
+    //        UART_PRINT("Error Closing\n");
+    //    }
+    //
+    //
+    //
+    //    DeviceFileHandle =  sl_FsOpen((unsigned char *)DEVICEFILENAME,SL_FS_READ,&MasterToken);
+    //    if(DeviceFileHandle < 0){
+    //        UART_PRINT("Error Opening\n");
+    //    }
+    //
+    //    for(i = 0; i < LINES; i++){
+    //        RetVal = sl_FsRead( DeviceFileHandle, i*MAXCRUZIDLENGTH, (unsigned char *)cruzIDArray[i], MAXCRUZIDLENGTH);
+    //        if(RetVal < 0){
+    //            UART_PRINT("Error writing at line %d\n", i);
+    //        }
+    //    }
+    //    RetVal = sl_FsClose(DeviceFileHandle, NULL, NULL , 0);
+    //    if(DeviceFileHandle < 0){
+    //        UART_PRINT("Error Opening\n");
+    //    }
+    //
+    //
+    //
+    //    for(i = 0; i < LINES; i++){
+    //        UART_PRINT("Line: %d, cruzID: %s\n", cruzIDArray[i]);
+    //    }
+    //    while(1){
+    //
+    //    }
+}
+
+
+
+
+void motorControl(uint8_t state, uint8_t direction){
+    if(state == MOTORSTATEON){
+        if(direction == MOTORCCW){
+            GPIO_write(CC3220S_LAUNCHXL_PIN_02, 1);
+            GPIO_write(CC3220S_LAUNCHXL_PIN_01, 0);
+        }else if(direction == MOTORCW){
+            GPIO_write(CC3220S_LAUNCHXL_PIN_02, 0);
+            GPIO_write(CC3220S_LAUNCHXL_PIN_01, 1);
+        }else{
+            return;
+        }
+    }else{
+        return;
+    }
+    return;
+}
+
+
+void StartWiFi(void){
+//    /*VARIABLE*/
+    pthread_attr_t  pAttrs_spawn;
+    struct sched_param  priParam;
+    int32_t RetVal;
+//
+    /*PTHREAD*/
+    pthread_attr_init(&pAttrs_spawn);
+    priParam.sched_priority = SPAWN_TASK_PRIORITY;
+    RetVal = pthread_attr_setschedparam(&pAttrs_spawn, &priParam);
+    RetVal |= pthread_attr_setstacksize(&pAttrs_spawn, TASK_STACK_SIZE);
+    RetVal = pthread_create(&gSpawnThread, &pAttrs_spawn, sl_Task, NULL);
+    if(RetVal){
+        /* Handle Error */
+        UART_PRINT("Unable to create sl_Task thread \n");
+        while(1);
+    }
+
+    UART_PRINT("ConfigureSimpleLinkToDefaultState\n");
+    RetVal = ConfigureSimpleLinkToDefaultState();               //calls sl_Start()
+    UART_PRINT("ConfigureSimpleLinkToDefaultState: %d\n", RetVal);
+
+
+    if(RetVal < 0)
+    {
+        /* Handle Error */
+        UART_PRINT("EMPTY project - Couldn't configure Network Processor\n");
+    }
+}
+
+
+
+/*\brief WLAN Async event handler*/
+void SimpleLinkWlanEventHandler(SlWlanEvent_t *slWlanEvent){
+    UART_PRINT("In SimpleLinkWlanEventHandler()\n");
+    if(!slWlanEvent)
+    {
+        return;
+    }
+
+    UART_PRINT("Entering SimpleLinkWlanEventHandler() switch statement\n");
+    switch(slWlanEvent->Id)
+    {
+        case SL_WLAN_EVENT_CONNECT:{
+            SET_STATUS_BIT(app_CB.Status, STATUS_BIT_CONNECTION);
+            /* Copy new connection SSID and BSSID to global parameters */
+            memcpy(app_CB.CON_CB.ConnectionSSID, slWlanEvent->Data.Connect.SsidName, slWlanEvent->Data.Connect.SsidLen);
+            memcpy(app_CB.CON_CB.ConnectionBSSID, slWlanEvent->Data.Connect.Bssid, SL_WLAN_BSSID_LENGTH);
+
+            UART_PRINT("\n\r[WLAN EVENT] STA Connected to the AP: %s , "
+                "BSSID: %x:%x:%x:%x:%x:%x\n\r",
+                      app_CB.CON_CB.ConnectionSSID, app_CB.CON_CB.ConnectionBSSID[0],
+                      app_CB.CON_CB.ConnectionBSSID[1],app_CB.CON_CB.ConnectionBSSID[2],
+                      app_CB.CON_CB.ConnectionBSSID[3],app_CB.CON_CB.ConnectionBSSID[4],
+                      app_CB.CON_CB.ConnectionBSSID[5]);
+
+            sem_post(&app_CB.CON_CB.connectEventSyncObj);
+
+        }
+        break;
+        case SL_WLAN_EVENT_DISCONNECT:
+               {
+                   //SlWlanEventDisconnect_t  *pEventData = NULL;
+
+                   CLR_STATUS_BIT(app_CB.Status, STATUS_BIT_CONNECTION);
+                   CLR_STATUS_BIT(app_CB.Status, STATUS_BIT_IP_ACQUIRED);
+                   CLR_STATUS_BIT(app_CB.Status, STATUS_BIT_IPV6_ACQUIRED);
+
+                   //pEventData = &slWlanEvent->Data.Disconnect;
+
+                   UART_PRINT("\n\r[WLAN ERROR] Device disconnected from the AP: %s,\n\r"
+                   "BSSID: %x:%x:%x:%x:%x:%x\n\r",
+                     app_CB.CON_CB.ConnectionSSID, app_CB.CON_CB.ConnectionBSSID[0],
+                     app_CB.CON_CB.ConnectionBSSID[1],app_CB.CON_CB.ConnectionBSSID[2],
+                     app_CB.CON_CB.ConnectionBSSID[3],app_CB.CON_CB.ConnectionBSSID[4],
+                     app_CB.CON_CB.ConnectionBSSID[5]);
+
+                   memset(&(app_CB.CON_CB.ConnectionSSID), 0x0, sizeof(app_CB.CON_CB.ConnectionSSID));
+                   memset(&(app_CB.CON_CB.ConnectionBSSID), 0x0, sizeof(app_CB.CON_CB.ConnectionBSSID));
+               }
+               break;
+        default:{
+            UART_PRINT("\n\r[WLAN EVENT] Unexpected event [0x%x]\n\r", slWlanEvent->Id);
+            }
+            break;
+    }
+    UART_PRINT("Exited SimpleLinkWlanEventHandler() switch statement\n");
+    CONNECTED = 1;
+
+}
+
+
+
+int32_t ConfigureSimpleLinkToDefaultState(){
+    int32_t  RetVal = -1;
+    int32_t  Mode = -1;
+    //         SlWlanScanParamCommand_t             ScanDefault = {0};
+    //         SlWlanRxFilterOperationCommandBuff_t RxFilterIdMask = {{0}};
+
+    /* Turn NWP on */
+    Mode = sl_Start(0, 0, 0);
+    ASSERT_ON_ERROR(Mode, DEVICE_ERROR);
+    UART_PRINT("Mode: %d\n", Mode);
+
+
+    if(Mode != ROLE_STA)
+    {
+        UART_PRINT("Not STA\n");
+        /* Set NWP role as STA */
+        Mode = sl_WlanSetMode(ROLE_STA);
+        ASSERT_ON_ERROR(Mode, WLAN_ERROR);
+        UART_PRINT("Set Mode: %d\n", Mode);
+
+         /* For changes to take affect, we restart the NWP */
+         RetVal = sl_Stop(SL_STOP_TIMEOUT);
+         ASSERT_ON_ERROR(RetVal, DEVICE_ERROR);
+         UART_PRINT("RetVal: %d\n", RetVal);
+
+
+         Mode = sl_Start(0, 0, 0);
+         ASSERT_ON_ERROR(Mode, DEVICE_ERROR);
+         UART_PRINT("Mode: %d\n", Mode);
+    }
+
+    if(Mode != ROLE_STA)
+    {
+         UART_PRINT("Failed to configure device to it's default state");
+         return -1;
+    }else{
+         SlWlanSecParams_t SecParams;
+         SecParams.Type = SL_WLAN_SEC_TYPE_WPA_WPA2;
+         SecParams.Key = WIFI_KEY;
+         SecParams.KeyLen = strlen(SecParams.Key);
+         sl_WlanConnect(WIFI_SSID,strlen(WIFI_SSID),0 ,&SecParams ,0);
+
+         return 0;
+    }
+
+}
+
+int32_t initAppVariables(void)
+{
+    int32_t ret = 0;
+
+    app_CB.Status = 0 ;
+    app_CB.Role = ROLE_RESERVED;
+    app_CB.Exit = FALSE;
+
+
+    memset(&app_CB.CmdBuffer, 0x0, CMD_BUFFER_LEN);
+    //memset(&app_CB.gDataBuffer, 0x0, sizeof(app_CB.gDataBuffer));
+    memset(&app_CB.CON_CB, 0x0, sizeof(app_CB.CON_CB));
+
+    ret = sem_init(&app_CB.CON_CB.connectEventSyncObj,    0, 0);
+    if(ret != 0)
+    {
+        SHOW_WARNING(ret, OS_ERROR);
+        return -1;
+    }
+
+    ret = sem_init(&app_CB.CON_CB.eventCompletedSyncObj,  0, 0);
+    if(ret != 0)
+    {
+        SHOW_WARNING(ret, OS_ERROR);
+        return -1;
+    }
+
+    ret = sem_init(&app_CB.CON_CB.ip4acquireEventSyncObj, 0, 0);
+    if(ret != 0)
+    {
+        SHOW_WARNING(ret, OS_ERROR);
+        return -1;
+    }
+
+    ret = sem_init(&app_CB.CON_CB.ip6acquireEventSyncObj, 0, 0);
+    if(ret != 0)
+    {
+        SHOW_WARNING(ret, OS_ERROR);
+        return -1;
+    }
+
+    ret = sem_init(&app_CB.WowlanSleepSem, 0, 0);
+    if(ret != 0)
+    {
+        SHOW_WARNING(ret, OS_ERROR);
+        return -1;
+    }
+
+    return ret;
+}
+
+
+int32_t createSocket(sockAddr_t*  sAddr){
+    UART_PRINT("I GOT HERE\n");
+    SlSockAddr_t *Sa;
+    int32_t Sd;
+    //sockAddr_t  sAddr;
+    sAddr->in4.sin_family = SL_AF_INET;
+    sAddr->in4.sin_port = sl_Htons((unsigned short)6001);
+    //sAddr->in4.sin_addr.s_addr = sl_Htonl(SL_IPV4_VAL(192,168,0,116));
+    sAddr->in4.sin_addr.s_addr = SL_IPV4_VAL(35,230,38,111);
+    Sa = (SlSockAddr_t*)&sAddr->in4;
+
+    Sd = sl_Socket(Sa->sa_family, SL_SOCK_STREAM, TCP_PROTOCOL_FLAGS);
+    return Sd;
+}
+
+int32_t IsAllowed(int Sd, SlSockAddr_t * Sa , char * cruzID){
+
+    int32_t Status = -1;
+    int32_t addrSize = sizeof(SlSockAddrIn6_t);
+    int32_t returnValue = -1;
+    char sending_buffer[25];
+    char RecvBuf[50];
+    _i16 nb = 1; //nonblocking call
+
+
+    sprintf(sending_buffer,"\\login %s %s",cruzID, ROOM_NUMBER);
+    UART_PRINT("Sending buffer: %s\n", sending_buffer);
+    while(Status < 0)
+    {
+       /* Calling 'sl_Connect' followed by server's
+        * 'sl_Accept' would start session with
+        * the TCP server. */
+       Status = sl_Connect(Sd, Sa, addrSize);
+       if((Status == SL_ERROR_BSD_EALREADY)&& (nb))
+       {
+           sleep(1);
+           continue;
+       }
+       else if(Status < 0)
+       {
+           UART_PRINT("[line:%d, error:%d] %s\n\r", __LINE__, Status, SL_SOCKET_ERROR);
+           sl_Close(Sd);
+           return -1;
+       }
+       break;
+    }
+    UART_PRINT("Left while loop\n");
+
+    Status = sl_Send(Sd, sending_buffer, strlen(sending_buffer), 0 );
+    if(Status < 0)
+    {
+        UART_PRINT("ERROR SEND\n");
+    }
+    Status = sl_Recv(Sd, RecvBuf, 20, 0);
+    if(Status < 0)
+    {
+        UART_PRINT("[line:%d, error:%d] %s\n\r", __LINE__, Status, BSD_SOCKET_ERROR);
+        sl_Close(Sd);
+        return -1;
+    }else{
+        RecvBuf[Status] = 0;
+//        Status = sl_Close(Sd);
+//        if( Status )
+//        {
+//            UART_PRINT("ERROR CLOSE\n");
+//        }
+        if(strcmp(RecvBuf,ALLOWED) == 0){
+            UART_PRINT("Return 1\n");
+            returnValue = 1;
+        }else if (strcmp(RecvBuf,DENIED) == 0){
+            UART_PRINT("Return 0\n");
+            returnValue = 0;
+        }
+        else{
+            UART_PRINT("Return -1\n");
+            //return -1;
+        }
+    }
+    UART_PRINT("still here\n");
+    return returnValue;
+//
+//    UART_PRINT("didn't return returnValue\n");
+//
+//    Status = sl_Close(Sd);
+//    if( Status )
+//    {
+//        UART_PRINT("ERROR CLOSE\n");
+//    }
+//    return -1;
+}
+
+int8_t ResetRoom(int Sd, SlSockAddr_t * Sa){
+    int32_t Status = -1;
+    int32_t addrSize = sizeof(SlSockAddrIn6_t);
+    char sending_buffer[25];
+    char RecvBuf[50];
+    _i16 nb = 1; //nonblocking call
+
+
+    sprintf(sending_buffer,"\\reset %s",ROOM_NUMBER);
+    while(Status < 0)
+    {
+      /* Calling 'sl_Connect' followed by server's
+       * 'sl_Accept' would start session with
+       * the TCP server. */
+      Status = sl_Connect(Sd, Sa, addrSize);
+      if((Status == SL_ERROR_BSD_EALREADY)&& (nb))
+      {
+          sleep(1);
+          continue;
+      }
+      else if(Status < 0)
+      {
+        //  UART_PRINT("[line:%d, error:%d] %s\n\r", __LINE__, Status, SL_SOCKET_ERROR);
+          sl_Close(Sd);
+      }
+      break;
+    }
+
+    Status = sl_Send(Sd, sending_buffer, strlen(sending_buffer), 0 );
+    if(Status < 0)
+    {
+      // UART_PRINT("ERROR SEND\n");
+    }
+    Status = sl_Recv(Sd, RecvBuf, 20, 0);
+    if(Status < 0)
+    {
+     //  UART_PRINT("[line:%d, error:%d] %s\n\r", __LINE__, Status, BSD_SOCKET_ERROR);
+       sl_Close(Sd);
+    }else{
+       RecvBuf[Status] = 0;
+     //  UART_PRINT("ROOM RESET\n");
+    }
+    // UART_PRINT("end of function\n");
+    return 1;
+}
+
+
+/*
+ *  ======== asynchronous events for the SimpleLink library ========
+ */
+
+/*brief      Fatal Error async event for inspecting fatal error events.
+                This event handles events/errors reported from the device/host driver*/
+void SimpleLinkFatalErrorEventHandler(SlDeviceFatal_t *slFatalErrorEvent)
+{
+
+}
+/*\brief      General async event for inspecting general events.
+                This event handles events/errors reported from the device/host driver*/
+void SimpleLinkGeneralEventHandler(SlDeviceEvent_t *slDeviceEvent){
+
+}
+
+/*\brief Socket Async event handler*/
+void SimpleLinkSockEventHandler(SlSockEvent_t *slSockEvent){
+
+}
+
+/* \brief HTTP server async event*/
+void SimpleLinkHttpServerEventHandler(SlNetAppHttpServerEvent_t *slHttpServerEvent,SlNetAppHttpServerResponse_t *slHttpServerResponse){
+
+}
+/* \brief NETAPP Async event handler*/
+void SimpleLinkNetAppEventHandler(SlNetAppEvent_t *slNetAppEvent){
+
+}
+
+/*\brief          A handler for handling Netapp requests.
+                    Netapp request types:
+                    For HTTP server: GET / POST (future: PUT / DELETE)*/
+void SimpleLinkNetAppRequestEventHandler(SlNetAppRequest_t *slNetAppRequest,SlNetAppResponse_t *slNetAppResponse){
+
+}
+
+/*\brief          A handler for freeing the memory of the NetApp response.*/
+void SimpleLinkNetAppRequestMemFreeEventHandler(unsigned char *memFree){
+
+}

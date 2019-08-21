@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>{{user['Name']}}</h1>
+<hr>
+{%for room in rooms%}
+
+	<h1>{{room}}</h1> 
+	{% if (roomlogs[room]) %}
+	<form action= {{ url_for('user_histogram', cruzID = user['cruzID'], room_number=room ) }}>
+		<button>View Histogram</button>
+	</form> 
+	<table>
+		<tr>
+			  <th>CruzID</th>
+			  <th>Enter Time</th>
+			  <th>Exit Time</th>
+	  	</tr>
+		  
+		
+			{%for entry in roomlogs[room]%}
+				<tr>
+					<td>{{ entry['cruzID'] }}</td>	
+					<td>{{ entry['Enter_Time'] }}</td>	
+					<td>{{ entry['Exit_Time'] }}</td>	
+				</tr>
+			{% endfor %}
+		{%else%}
+			<p>No logs for {{room}}</p>
+		{% endif %}
+	  		
+		
+	</table>
+{% endfor %}	
+{% endblock content %}

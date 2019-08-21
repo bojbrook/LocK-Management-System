@@ -1,0 +1,27 @@
+#include "cache.h"
+
+
+Cache *CacheInit(){
+    Cache cache = malloc(CACHESIZE*sizeof(Cache));
+    if(cache == NULL){
+        return NULL;
+    }
+    return cache;
+}
+
+void CacheDelete(Cache *cache){
+    if(cache != NULL){
+        free(cache);
+    }
+}
+
+
+Cache *CacheClear(Cache *cache){
+    CacheDelete(cache);
+    Cache *newCache = CacheInit();
+    return newCache;
+}
+
+void newLoginCache(Cache *cache, char *cruzID){
+
+}

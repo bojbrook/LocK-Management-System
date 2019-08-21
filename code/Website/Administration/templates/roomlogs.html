@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block content %}
+	<h1>{{room["Room_Number"]}}</h1>
+	<div id="divControlRoom">
+
+		<form action="{{ url_for('export', room_number=room)}}" method="GET">
+			<button type="submit">Export to csv</button>	
+		</form>
+
+		<form action= "{{ url_for('room_histogram', room_number=room['Room_Number']) }}">
+				<button>View Histogram</button>
+		</form>
+
+		<form action="{{url_for('adduser',room_number=room['Room_Number'])}}" method="POST" >
+				<input class = "inputclass" type="text" name="addUser"/>
+				<button type="submit">Add User</button>
+		</form>
+
+		<form action="{{url_for('addgroup',room_number=room['Room_Number'])}}" method="POST" >
+					<input class = "inputclass" type="text" name="addGroup"/>
+					<button type="submit">Add Group</button>
+		</form>
+ </div>
+
+<div id="roomInfo">
+	<h1>Groups</h1><hr>
+		<!-- Showing all the groups and adding groups to room -->
+		{%for group in room['Group']%}
+		<div style="margin: 15px;">
+				<p style="position: absolute; left: 5px;">{{group}} </p>
+				<div class="removediv">
+					<form action="{{url_for('removegroup',room_number=room['Room_Number'], group_name=group)}}" method="POST">
+						<input class="remove" type="image" src="/static/images/remove_icon.png" border="0" alt="Submit"/>
+					</form>
+				</div>
+				<br>
+		</div>
+		{%endfor%}
+		<br>
+
+		<h1>Users</h1><hr style="color: #F1B521">
+		<!-- Showing users and adding users to group -->
+		{%for user in room['Users']%}
+		<div style="margin: 15px;">
+			<p style="position: absolute; left: 5px;">{{user}}</p>
+			<div class="removediv">
+					<form action="{{url_for('removeuser',room_number=room['Room_Number'], user_name=user)}}" method="POST">
+					<input class="remove" type="image" src="/static/images/remove_icon.png" border="0" alt="Submit"/>
+					</form>
+			</div>
+			<br>
+		</div>
+		{%endfor%}
+		
+</div>
+
+<div id= "logs">
+	<h1 style="text-align: center;">Room Logs</h1>
+	<table>
+		<tr>
+		  <th>CruzID</th>
+		  <th>Enter Time</th>
+		  <th>Exit Time</th>
+  	</tr>
+		{% for log in Logs %}
+		<tr>
+	    <td>{{ log['cruzID'] }}</a></td>
+	    <td>{{ log['Enter_Time'] }}</td>
+	    <td>{{ log['Exit_Time'] }}</td>
+	  </tr>
+		{% endfor %}
+	</table>
+</div>
+{% endblock content %}

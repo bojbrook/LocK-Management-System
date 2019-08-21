@@ -1,0 +1,133 @@
+body { 
+	margin: 0;
+  padding: 5px;
+	font-family: sans-serif;
+	padding-top: 0px;
+	background-color: #00458c;
+	color: #F1B521;
+}
+
+a, h1, h2 { 
+	color: #F1B521; 
+}
+h1, h2 { 
+	margin: 0; 
+}
+h2 { 
+	font-size: 1.2em; 
+}
+table,td {	
+	padding-right: 15px;
+	padding-bottom: 5px;
+}
+#trash{
+	width: 25px;
+	height: 25px;
+}
+
+.group{
+	display: list-item;
+}
+
+.remove{
+	width: 25px;
+	height: 25px;
+}
+
+button {	
+	border: none;
+	text-align: center;
+	text-decoration: none;
+	/*display: inline-block;*/
+	font-size: 16px;
+	margin: 4px 2px;
+	cursor: pointer;
+	border-radius: 3px;
+	width: 150px;
+}
+
+.inputclass{
+	text-align: center;
+	background-color: #ECF0F1;
+	border: 2px solid transparent;
+	border-radius: 3px;
+	font-size: 16px;
+	font-weight: 200;
+	padding: 10px;
+	margin: 5px;
+	width: 250px;
+	/*transition: border .5s;*/
+}
+
+.menu {
+  float: right;
+	margin-top: 8px;
+
+}
+.menu li {
+  display: inline;
+  margin-left: 35px;
+}
+
+.rooms{
+	overflow-y: scroll; 
+	height:80%;
+}
+
+.upload-side{
+	float: left;
+	width: 35%;
+}
+
+/* styling for the card view */
+.card {
+	/* Add shadows to create the "card" effect */
+	/* background-color: aqua; */
+	margin: 8px;
+	box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.5);
+	transition: 0.3s;
+	width: 40%;
+	float: left;
+}
+
+/* On mouse-over, add a deeper shadow */
+.card:hover {
+	background-color: #0254a7;
+	box-shadow: 0 8px 16px 0 rgba(0,0,0,0.5);
+}
+
+/* Styling for logs of each room */
+#logs{
+	overflow-y: scroll; 
+	/*height:400px;*/
+	right: 5px;
+	width: 50%;
+	position: absolute;
+	top: 25px;
+}
+
+	/*.logs table tr td{
+		float: right;
+	}*/
+
+#divControlRoom{
+	display: inline;
+	/*display: inline-block;*/
+	
+}
+
+#roomInfo{
+	position: absolute;
+	width: 150px;
+	left: 5px;
+	/*position: relative;*/
+	
+}
+
+.removediv{
+	position: absolute;
+	right: 5px;
+}
+
+
+

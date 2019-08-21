@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorPrimary">#3F51B5</color>
+    <color name="colorPrimaryDark">#303F9F</color>
+    <color name="colorAccent">#FF4081</color>
+    <color name="UCSCBlue">#00458c</color>
+    <color name="UCSCBlueDarker">#00366e</color>
+    <color name="UCSCGold">#f1b521</color>
+    <color name="UCSCBlueLighter">#0254a7</color>
+</resources>

@@ -1,0 +1,24 @@
+#include <unistd.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdint.h>
+#include <stddef.h>
+#include <string.h>
+
+
+#define CACHESIZE               16
+#define LNCACHESIZE             4
+
+
+
+
+
+typedef struct Cache{
+    char cruzID[] = "unknownID"; //9 characters + null terminator
+}Cache;
+
+
+Cache *CacheInit();
+void CacheDelete(Cache *cache);
+Cache *CacheClear(Cache *cache);
+

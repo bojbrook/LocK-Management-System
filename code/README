@@ -1,0 +1,5 @@
+Contents of this directory:
+
+cloud: holds all the files for the administrative website
+Server: hold all the files for the code running on the google cloud VM
+micro: hold the project for the micro controller

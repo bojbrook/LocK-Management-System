@@ -1,0 +1,55 @@
+# Files to ignore while saving
+# C ignores
+*.o
+*.a
+*.so
+a.out
+# Editor backup files
+*.bak
+*.swp
+*.swo
+*~
+# Others
+*.tar
+*.tar.gz
+*.zip
+*.exe
+*.tgz
+*.pkg
+*.dmg
+*.img
+*.iso
+*.dll
+*.pyc
+
+#android App
+code/Android_App/build/
+code/Android_App/.gradle/
+code/Android_App/.signing/
+
+# User-specific configurations
+*.idea/libraries/
+*.idea/workspace.xml
+*.idea/tasks.xml
+*.idea/.name
+*.idea/compiler.xml
+*.idea/copyright/profiles_settings.xml
+*idea/encodings.xml
+*.idea/misc.xml
+*.idea/modules.xml
+*.idea/scopes/scope_settings.xml
+*.idea/vcs.xml
+*.iml
+
+#for the website code
+code/Website/env
+code/Website/*.json
+code/Website/__pycache__
+code/Website/Administration/__pycache__
+*.pyc
+
+
+#for the cloud
+code/cloud/env
+code/cloud/*.json
+code/cloud/*.csv

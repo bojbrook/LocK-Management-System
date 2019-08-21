@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block content %}
+	<h1>Users</h1>
+	<button style="position: right;">Delete ALL</button>
+
+	{% for user in users %}	
+		<div class="card" style="display: inline">
+				<h1 style="margin: 1px">{{user['Name']}}</h1>
+				<p>Cruz ID: {{ user['cruzID'] }}</p>
+				<form class= "cardform" action = {{ url_for('view_user_logs', cruzID=user['cruzID'])}} method = "GET">
+						<button style="float: right;">View Room History</button>
+				</form>
+				<form action = {{url_for('delete_user', cruzID=user['cruzID'])}} method = "POST">
+					<input style="width: 35px; height: 35px; float: left;" type="image" src="/static/images/remove_icon.png" border="0" alt="Submit"/>
+				</form>
+		</div>
+		<!-- {#<tr>
+			<td><b>{{ user['Name'] }}</b></td>
+			<td>{{ user['cruzID'] }}</td>
+			<td>{{ Rooms[user['cruzID']] }}</td>
+			<td>
+				<form action = {{ url_for('view_user_logs', cruzID=user['cruzID'])}} method = "GET">
+					<button>View Room History</button>
+				</form>
+			</td>
+			<td><button>Delete</button></td>
+		</tr>#} -->
+	{% endfor %}
+	<!-- </table> -->
+
+{% endblock content %}

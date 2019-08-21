@@ -1,0 +1,19 @@
+<resources>
+
+    <!-- Base application theme. -->
+    <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
+        <!-- Customize your theme here. -->
+        <item name="colorPrimary">@color/UCSCBlue</item>
+        <item name="colorPrimaryDark">@color/UCSCBlue</item>
+        <item name="colorAccent">@color/UCSCGold</item>
+    </style>
+
+    <style name="UCSCLoginTest">
+        <item name="android:textColor">@color/UCSCGold</item>
+    </style>
+
+    <style name="RoomInfo" parent="TextAppearance.AppCompat.Display1">
+        <!--<item name="android:textColor">@color/UCSCGold</item>-->
+    </style>
+
+</resources>

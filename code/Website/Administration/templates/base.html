@@ -1,0 +1,42 @@
+<!doctype html>
+<html> 
+    <head>
+        {% if title %}
+        <title>{{ title }}</title>
+        {% else %}
+        <title>UCSC Lock Management</title>
+        {% endif %}
+      <link href="/static/css/style.css" rel="stylesheet" >
+
+        <script src="/static/scripts/scripts.js"></script>
+      <!-- <link href="/static/css/bootstrap-responsive.min.css" rel="stylesheet">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0"> -->
+    </head>
+    <body>
+        <header>
+            <div class="container">
+                <strong><nav>
+                  <ul class="menu">
+                        <a href="{{ url_for('index') }}">Index</a>
+                        <a href="{{ url_for('users') }}">Users</a>
+                        <a href="{{url_for('logout')}}">Logout</a>
+                  </ul>
+                </nav></strong>   
+            </div>
+        </header>
+        
+        <!-- <hr> -->
+
+
+
+        {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            <script>
+                alert( {{messages}});
+            </script>
+        {% endif %}
+        {% endwith %}
+        
+        {% block content %}{% endblock %}
+    </body>
+</html>
